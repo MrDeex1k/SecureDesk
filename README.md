@@ -1,4 +1,4 @@
-# SecureDesk - Incident Management & SIEM
+# BastionDesk - HelpDesk Application for Incident Management
 
 ## Zmienne środowiskowe  
 ```
@@ -13,6 +13,6 @@ DATABASE_URL=  = ...
 
 ## Proces uruchomienia
 
-1. Wchodzimy w katalog SecureDesk.  
+1. Wchodzimy w katalog BastionDesk.  
 2. Uruchamiamy komendę "docker compose build" .  
 3. Uruchamiamy komendę "docker compose up" lub "docker compose up -d", jeśli chcemy uruchomić w tle.    
