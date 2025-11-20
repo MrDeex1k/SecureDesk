@@ -2,7 +2,7 @@ services:
   database:
     build:
       context: ./database
-    container_name: securedesk-postgres
+    container_name: bastiondesk-postgres
     env_file:
       - .env
     restart: unless-stopped
@@ -16,17 +16,29 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./database/init-sql:/docker-entrypoint-initdb.d
     networks:
-      - securedesk-net
+      - bastiondesk-net-internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -p ${POSTGRES_PORT} -U ${POSTGRES_USER:-zglosto_user} -d ${POSTGRES_DB:-zglosto_db}"]
+      test: ["CMD-SHELL", "pg_isready -p ${POSTGRES_PORT} -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 4s
       timeout: 4s
       retries: 5
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: bastiondesk-nginx
+    ports:
+      - "4586:4586"
+    networks:
+      - bastiondesk-net-internal
+      - bastiondesk-net-external
 
 volumes:
   postgres-data:
     driver: local
 
 networks:
-  securedesk-net:
+  bastiondesk-net-internal:
+    driver: bridge
+  bastiondesk-net-external:
     driver: bridge
