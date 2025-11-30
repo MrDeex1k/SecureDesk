@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import uvicorn
 
-
 MODEL_NAME = "google/gemma-3-1b-it"
 app = FastAPI(title="LLM Service")
 
@@ -11,7 +10,6 @@ class QueryRequest(BaseModel):
 	prompt: str
 
 MODEL_LOAD_ERROR = ""
-
 
 try:
 	tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)

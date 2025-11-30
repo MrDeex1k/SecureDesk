@@ -26,14 +26,13 @@ services:
   llm_service:
     build:
       context: ./llm_service
-    ports:
-      - "8778:8778"
     env_file:
       - .env
     volumes:
       - huggingface-cache:/root/.cache/huggingface
     networks:
       - bastiondesk-net-internal
+      - bastiondesk-net-external
     deploy:
       resources:
         limits:
