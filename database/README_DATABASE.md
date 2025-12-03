@@ -9,7 +9,8 @@ database/
 ├── Dockerfile              # Obraz Docker dla PostgreSQL 18
 ├── init-sql/               # Skrypty inicjalizacyjne SQL
 │   ├── 01-init.sql        # Rozszerzenia + rola + baza danych
-│   └── 02-create-auth.sql # Schemat autoryzacji Better-Auth
+│   ├── 02-create-auth.sql # Schemat autoryzacji Better-Auth
+│   └── 03-create-app.sql  # Schemat aplikacji (zgłoszenia/incydenty)
 └── README.md              # Ten plik
 ```
 
@@ -23,6 +24,8 @@ database/
 - ✅ **Last Login Method** - śledzenie metody ostatniego logowania
 - ✅ **Organizacje** - multi-tenancy z rolami
 - ✅ **Zespoły (Teams)** - grupowanie użytkowników w organizacji
+- ✅ **System zgłoszeń** - zarządzanie incydentami z workflow analizy
+- ✅ **Audit logging** - automatyczne logowanie zmian statusu zgłoszeń
 
 ---
 
@@ -35,6 +38,20 @@ System wykorzystuje **3 role**:
 |   `admin`   | Administrator/Właściciel | Pełne uprawnienia - zarządzanie organizacją, członkami, zespołami, raportami |
 |  `analityk` |      Analityk danych     |                Dostęp do raportów i analityk, podgląd organizacji            |
 | `pracownik` |         Pracownik        |                  Podstawowy dostęp do organizacji (tylko odczyt)             |
+
+---
+
+## Typy wyliczeniowe
+
+### `incident_status` - Statusy zgłoszeń
+
+| Status | Opis |
+|--------|------|
+| `pending` | Nowe zgłoszenie oczekuje na obsługę |
+| `analyzing` | Zgłoszenie w trakcie analizy przez AI lub Analityka |
+| `needs_info` | Analityk potrzebuje więcej informacji od użytkownika |
+| `resolved` | Zgłoszenie zostało rozwiązane |
+| `rejected` | Zgłoszenie zostało odrzucone |
 
 ---
 
@@ -177,13 +194,46 @@ System wykorzystuje **3 role**:
 | `success` | `boolean` | Czy logowanie udane |
 | `failure_reason` | `text` | Przyczyna niepowodzenia |
 
+### 13. `incidents` - Zgłoszenia/Incydenty
+
+| Kolumna | Typ | Opis |
+|---------|-----|------|
+| `id` | `UUID` | Klucz główny (uuidv7) |
+| `user_id` | `text` | FK do user |
+| `status` | `incident_status` | Status: `pending`, `analyzing`, `needs_info`, `resolved`, `rejected` |
+| `user_description` | `text` | Opis zgłoszenia od użytkownika |
+| `user_screenshot_data` | `jsonb` | Metadane screenshotów w MinIO |
+| `user_attachment_data` | `jsonb` | Metadane załączników w MinIO |
+| `analyst_note` | `text` | Notatki analityka |
+| `analyst_report_data` | `jsonb` | Metadane raportu analityka w MinIO |
+| `analyst_statement_data` | `jsonb` | Dodatkowe oświadczenia analityka |
+| `llm_category` | `text` | Kategoria nadana przez LLM |
+| `created_at` | `timestamptz` | Data utworzenia |
+| `updated_at` | `timestamptz` | Data ostatniej aktualizacji |
+
+### 14. `incident_audit_log` - Historia zmian zgłoszeń
+
+| Kolumna | Typ | Opis |
+|---------|-----|------|
+| `id` | `BIGINT` | Klucz główny (auto-increment) |
+| `incident_id` | `UUID` | FK do incidents |
+| `changed_by` | `text` | ID użytkownika lub 'SYSTEM'/'LLM' |
+| `old_status` | `incident_status` | Poprzedni status |
+| `new_status` | `incident_status` | Nowy status |
+| `changed_at` | `timestamptz` | Data zmiany |
+
 ---
 
 ## Triggery
 
+### Autoryzacja (02-create-auth.sql)
 1. **`trigger_set_timestamp`** - automatyczna aktualizacja `updated_at`
 2. **`update_user_last_login`** - aktualizacja `last_login_method` i `last_login_at`
 3. **`on_organization_created`** - tworzenie domyślnych ról dla nowej organizacji
+
+### Aplikacja (03-create-app.sql)
+4. **`set_timestamp_incidents`** - automatyczna aktualizacja `updated_at` dla tabeli `incidents`
+5. **`log_status_change`** - automatyczne logowanie zmian statusu w `incident_audit_log`
 
 ---
 
@@ -241,7 +291,8 @@ docker-compose up -d database
 # Lub bezpośrednio psql
 psql -h localhost -U postgres -d bastiondesk \
   -f database/init-sql/01-init.sql \
-  -f database/init-sql/02-create-auth.sql
+  -f database/init-sql/02-create-auth.sql \
+  -f database/init-sql/03-create-app.sql
 ```
 
 ---

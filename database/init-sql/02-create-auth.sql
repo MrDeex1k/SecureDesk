@@ -425,7 +425,7 @@ BEGIN
 	-- Rola: admin (właściciel - pełne uprawnienia)
 	INSERT INTO organization_role (id, organization_id, role, permission)
 	VALUES (
-		gen_random_uuid()::text,
+		uuidv7()::text,
 		org_id,
 		'admin',
 		'{
@@ -441,7 +441,7 @@ BEGIN
 	-- Rola: analityk (dostęp do raportów i analityk)
 	INSERT INTO organization_role (id, organization_id, role, permission)
 	VALUES (
-		gen_random_uuid()::text,
+		uuidv7()::text,
 		org_id,
 		'analityk',
 		'{
@@ -456,7 +456,7 @@ BEGIN
 	-- Rola: pracownik (podstawowy dostęp)
 	INSERT INTO organization_role (id, organization_id, role, permission)
 	VALUES (
-		gen_random_uuid()::text,
+		uuidv7()::text,
 		org_id,
 		'pracownik',
 		'{
