@@ -30,65 +30,11 @@ database/
 
 System wykorzystuje **3 role**:
 
-| Rola | Opis | Uprawnienia |
-|------|------|-------------|
-| `admin` | Administrator/Właściciel | Pełne uprawnienia - zarządzanie organizacją, członkami, zespołami, raportami |
-| `analityk` | Analityk danych | Dostęp do raportów i analityk, podgląd organizacji |
-| `pracownik` | Pracownik | Podstawowy dostęp do organizacji (tylko odczyt) |
-
----
-
-## Schemat bazy danych
-
-### Diagram ERD
-
-```
-┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-│     user     │       │   session    │       │   account    │
-├──────────────┤       ├──────────────┤       ├──────────────┤
-│ id (PK)      │◄──────│ user_id (FK) │       │ id (PK)      │
-│ email        │       │ token        │       │ user_id (FK) │───►│user│
-│ name         │       │ expires_at   │       │ provider_id  │
-│ email_verified│      │ active_org_id│       │ password     │
-│ last_login_  │       └──────────────┘       └──────────────┘
-│   method     │
-│ password_    │       ┌──────────────┐
-│   compromised│       │   passkey    │
-└──────────────┘       ├──────────────┤
-       │               │ id (PK)      │
-       │               │ user_id (FK) │───────►│user│
-       │               │ public_key   │
-       │               │ credential_id│
-       ▼               │ counter      │
-┌──────────────┐       │ device_type  │
-│    member    │       └──────────────┘
-├──────────────┤
-│ id (PK)      │       ┌──────────────┐
-│ user_id (FK) │──────►│ organization │
-│ org_id (FK)  │──────►├──────────────┤
-│ role         │       │ id (PK)      │◄──────┐
-└──────────────┘       │ name         │       │
-                       │ slug         │       │
-                       └──────────────┘       │
-                              │               │
-       ┌──────────────────────┼───────────────┤
-       ▼                      ▼               │
-┌──────────────┐       ┌──────────────┐       │
-│     team     │       │  invitation  │       │
-├──────────────┤       ├──────────────┤       │
-│ id (PK)      │       │ id (PK)      │       │
-│ org_id (FK)  │──────►│ org_id (FK)  │───────┘
-│ name         │       │ email        │
-└──────────────┘       │ role         │
-       │               │ status       │
-       ▼               └──────────────┘
-┌──────────────┐
-│ team_member  │
-├──────────────┤
-│ team_id (FK) │
-│ user_id (FK) │
-└──────────────┘
-```
+|     Rola    |           Opis           |                                  Uprawnienia                                 |
+|-------------|--------------------------|------------------------------------------------------------------------------|
+|   `admin`   | Administrator/Właściciel | Pełne uprawnienia - zarządzanie organizacją, członkami, zespołami, raportami |
+|  `analityk` |      Analityk danych     |                Dostęp do raportów i analityk, podgląd organizacji            |
+| `pracownik` |         Pracownik        |                  Podstawowy dostęp do organizacji (tylko odczyt)             |
 
 ---
 
