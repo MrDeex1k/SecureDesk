@@ -1,26 +1,24 @@
--- PostgreSQL Initialization Script
+-- BastionDesk - PostgreSQL Initialization Script
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 DO $$
 BEGIN
-	IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '$POSTGRES_USER') THEN
-		CREATE ROLE $POSTGRES_USER WITH LOGIN PASSWORD '$POSTGRES_PASSWORD';
-	ELSE
-		ALTER ROLE $POSTGRES_USER PASSWORD '$POSTGRES_PASSWORD';
+	IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bastiondesk_superadmin') THEN
+		CREATE ROLE bastiondesk_superadmin WITH LOGIN;
 	END IF;
 
-	IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = '$POSTGRES_DB') THEN
+	IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'bastiondesk_db') THEN
 		PERFORM dblink_connect('dbname=postgres');
-		EXECUTE 'CREATE DATABASE $POSTGRES_DB OWNER $POSTGRES_USER';
+		EXECUTE 'CREATE DATABASE bastiondesk_db OWNER bastiondesk_superadmin';
 	ELSE
-		EXECUTE 'ALTER DATABASE $POSTGRES_DB OWNER TO $POSTGRES_USER';
+		EXECUTE 'ALTER DATABASE bastiondesk_db OWNER TO bastiondesk_superadmin';
 	END IF;
 EXCEPTION WHEN undefined_function THEN
-	IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = '$POSTGRES_DB') THEN
-		EXECUTE 'CREATE DATABASE $POSTGRES_DB OWNER $POSTGRES_USER';
+	IF NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = 'bastiondesk_db') THEN
+		EXECUTE 'CREATE DATABASE bastiondesk_db OWNER bastiondesk_superadmin';
 	ELSE
-		EXECUTE 'ALTER DATABASE $POSTGRES_DB OWNER TO $POSTGRES_USER';
+		EXECUTE 'ALTER DATABASE bastiondesk_db OWNER TO bastiondesk_superadmin';
 	END IF;
 END$$;
