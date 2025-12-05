@@ -41,18 +41,18 @@ uv sync
 uv run main.py
 ```
 
-Serwer uruchomi się na porcie **8778**.
+Serwer uruchomi się na porcie **8888**.
 
 Alternatywnie, użyj Docker:
 
 ```bash
 docker build -t llm-service .
-docker run -p 8778:8778 llm-service
+docker run -p 8888:8888 llm-service
 ```
 
 ## Dostępne endpointy
 
-Wszystkie endpointy są dostępne pod adresem `http://localhost:8778`.
+Wszystkie endpointy są dostępne pod adresem `http://localhost:8888`.
 
 ## Rozwiązywanie problemów
 
@@ -60,7 +60,7 @@ Wszystkie endpointy są dostępne pod adresem `http://localhost:8778`.
 Upewnij się, że masz dostęp do internetu podczas pierwszego uruchomienia (model zostanie pobrany). Sprawdź logi aplikacji.
 
 ### Port zajęty
-Jeśli port 8778 jest zajęty, zmień port w `main.py` lub użyj innego portu w Dockerze.
+Jeśli port 8888 jest zajęty, zmień port w `main.py` lub użyj innego portu w Dockerze.
 
 ### Problemy z zależnościami
 Upewnij się, że `uv` jest zainstalowany i uruchom `uv sync` w folderze `llm_service`.
