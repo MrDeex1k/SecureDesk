@@ -7,9 +7,15 @@
 CREATE TYPE incident_status AS ENUM (
     'pending',      -- Nowe zgłoszenie (oczekuje)
     'analyzing',    -- W trakcie analizy (przez AI lub Analityka)
-    'needs_info',   -- Analityk prosi o więcej danych
     'resolved',     -- Rozwiązane
     'rejected'      -- Odrzucone
+);
+
+-- Typ wyliczeniowy dla kategorii LLM (poziomy priorytetu/ryzyka)
+CREATE TYPE incident_category AS ENUM (
+    'Czerwony',     -- Wysoki priorytet/wysokie ryzyko
+    'Żółty',        -- Średni priorytet/ryzyko
+    'Zielony'       -- Niski priorytet/ryzyko
 );
 
 -- =============================================================================
@@ -36,11 +42,11 @@ CREATE TABLE IF NOT EXISTS incidents (
     
     -- Sekcja Analityka
     analyst_note text,
-    analyst_report_data jsonb DEFAULT '{}'::jsonb,   -- Np. ścieżka do PDF w MinIO
-    analyst_statement_data jsonb DEFAULT '{}'::jsonb, -- Dodatkowe oświadczenia
-    
-    -- Kategoria nadana przez LLM (opcjonalnie, jeśli chcesz to trzymać w głównej tabeli)
-    llm_category text,
+    analyst_report_data jsonb DEFAULT '{}'::jsonb,     -- Raport analityka (DOCX/PDF w MinIO)
+    analyst_statement_data jsonb DEFAULT '{}'::jsonb,  -- Sprawozdanie analityka (DOCX/PDF w MinIO)
+
+    -- Kategoria nadana przez LLM (poziomy priorytetu/ryzyka)
+    llm_category incident_category,
     
     -- Znaczniki czasu
     created_at timestamptz NOT NULL DEFAULT now(),
