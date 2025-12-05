@@ -1,0 +1,127 @@
+/**
+ * BastionDesk Backend
+ *
+ * Serwer Express z Better-Auth dla autoryzacji i autentykacji
+ */
+
+import express from "express";
+import cors from "cors";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "./lib/auth";
+import { env } from "./lib/env";
+import { closeDatabase, checkDatabaseConnection } from "./lib/database";
+import { errorHandler, notFoundHandler } from "./middleware";
+
+const app = express();
+
+// =============================================================================
+// CORS Configuration
+// =============================================================================
+app.use(
+	cors({
+		origin: env.CORS_ORIGIN.split(",").map((origin) => origin.trim()),
+		methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+		credentials: true,
+		allowedHeaders: ["Content-Type", "Authorization"],
+	}),
+);
+
+// =============================================================================
+// Better-Auth Handler (MUSI być PRZED express.json()!)
+// =============================================================================
+app.all("/api/auth/*splat", toNodeHandler(auth));
+
+// =============================================================================
+// Middleware
+// =============================================================================
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+// =============================================================================
+// Health Check (z weryfikacją bazy danych)
+// =============================================================================
+app.get("/health", async (_req, res) => {
+	const dbConnected = await checkDatabaseConnection();
+
+	res.status(dbConnected ? 200 : 503).json({
+		status: dbConnected ? "ok" : "degraded",
+		timestamp: new Date().toISOString(),
+		service: "bastiondesk-backend",
+		checks: {
+			database: dbConnected ? "connected" : "disconnected",
+		},
+	});
+});
+
+// =============================================================================
+// API Info
+// =============================================================================
+app.get("/api", (_req, res) => {
+	res.json({
+		message: "BastionDesk API",
+		version: "0.1.0",
+		endpoints: {
+			auth: "/api/auth/*",
+			incidents: "/api/incidents",
+			health: "/health",
+		},
+	});
+});
+
+// =============================================================================
+// API Routes (Faza 6)
+// =============================================================================
+// TODO: Dodać routery w Fazie 6
+// app.use("/api/incidents", incidentsRouter);
+
+// =============================================================================
+// Error Handling
+// =============================================================================
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+// =============================================================================
+// Start Server
+// =============================================================================
+const server = app.listen(env.PORT, () => {
+	console.log(`
+╔══════════════════════════════════════════════════════════════╗
+║                    BastionDesk Backend                       ║
+╠══════════════════════════════════════════════════════════════╣
+║  🚀 Server running on port ${env.PORT.toString().padEnd(32)}║
+║  📡 Environment: ${env.NODE_ENV.padEnd(42)}║
+║  🔐 Auth URL: ${env.BETTER_AUTH_URL.padEnd(45)}║
+╚══════════════════════════════════════════════════════════════╝
+  `);
+});
+
+// =============================================================================
+// Graceful Shutdown
+// =============================================================================
+async function gracefulShutdown(signal: string) {
+	console.log(`\n${signal} received, shutting down gracefully...`);
+
+	server.close(async () => {
+		console.log("HTTP server closed");
+
+		try {
+			await closeDatabase();
+			console.log("Database connections closed");
+		} catch (error) {
+			console.error("Error closing database:", error);
+		}
+
+		process.exit(0);
+	});
+
+	// Force exit po 10 sekundach
+	setTimeout(() => {
+		console.error("Forced shutdown after timeout");
+		process.exit(1);
+	}, 10000);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+export default app;
